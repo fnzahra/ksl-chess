@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masuk Panitia & Wasit · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="masuk" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {icon}=KSL;
+const G='<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 0 1 0-4.18V7.07H2.18A11 11 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>';
+let mode="pw",otpSent=false,wa="0877 5057 xxxx";
+KSL.page(()=>`
+  <div class="card" style="max-width:390px;margin:20px auto">
+    <div class="pad">
+      <h1>Masuk Panitia & Wasit</h1>
+      <div class="sm mute mt2">Khusus pengelola turnamen. Penonton & peserta tidak perlu masuk.</div>
+      <button type="button" class="btn alt block mt" data-act="google">${G}Lanjutkan dengan Google</button>
+      <div class="row nowrap mt" style="gap:10px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="sm mute">atau</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>
+      <div class="seg mt" style="width:100%">
+        <button type="button" class="${mode==="pw"?"on":""}" style="flex:1" data-act="mode" data-m="pw">Kata sandi</button>
+        <button type="button" class="${mode==="wa"?"on":""}" style="flex:1" data-act="mode" data-m="wa">OTP WhatsApp</button>
+      </div>
+    </div>
+    ${mode==="pw"?`
+    <form class="pad bt" id="f">
+      <div class="field"><label>Email atau nomor HP</label><input name="id" required value="0877 5057 xxxx"></div>
+      <div class="field"><label>Kata sandi</label><input name="pw" type="password" required value="prototype"><div class="hint"><a class="lnk" href="#" data-act="lupa">Lupa kata sandi?</a></div></div>
+      <button class="btn block" type="submit">${icon("lock")}Masuk</button>
+    </form>`:`
+    <form class="pad bt" id="fwa">
+      ${!otpSent?`
+        <div class="field"><label>Nomor WhatsApp</label><input name="wa" inputmode="tel" required value="${wa}" placeholder="08xx"></div>
+        <button class="btn acc block" type="submit">${icon("msg")}Kirim kode ke WhatsApp</button>
+      `:`
+        <div class="sm mute mb">Kode 4 digit dikirim ke WhatsApp <b>${wa}</b>. <a href="#" class="lnk" data-act="ganti">Ganti nomor</a></div>
+        <div class="field"><label>Kode verifikasi (OTP)</label><input name="otp" inputmode="numeric" maxlength="4" required value="1234" style="text-align:center;font-weight:700;letter-spacing:6px"></div>
+        <button class="btn acc block" type="submit">${icon("check")}Verifikasi & masuk</button>
+        <div class="hint" style="text-align:center"><a href="#" class="lnk" data-act="resend">Kirim ulang kode ke WA</a></div>
+      `}
+    </form>`}
+    <div class="pad bt sm mute" style="text-align:center">Klub atau komunitas baru? <a class="lnk" href="daftar.html">Daftar klub</a></div>
+  </div>`,{
+  google:()=>{KSL.setAuth("ksl");KSL.toast("Masuk dengan Google berhasil");setTimeout(()=>location.href="panel.html",600)},
+  mode:el=>{mode=el.dataset.m;otpSent=false},
+  ganti:()=>{otpSent=false},
+  resend:()=>{KSL.toast("Kode OTP dikirim ulang ke WhatsApp "+wa,"msg")},
+  lupa:()=>KSL.toast("Link atur ulang kata sandi dikirim ke email / HP kamu","msg")
+});
+document.addEventListener("submit",e=>{
+  e.preventDefault();const f=new FormData(e.target);
+  if(e.target.id==="f"){
+    if(String(f.get("pw")).length<6){KSL.toast("Email/HP atau kata sandi salah","x");return}
+    KSL.setAuth("ksl");KSL.toast("Berhasil masuk");setTimeout(()=>location.href="panel.html",500);
+  }else if(e.target.id==="fwa"){
+    if(!otpSent){wa=(f.get("wa")||"").trim();if(!wa){KSL.toast("Isi nomor WhatsApp dulu","x");return}otpSent=true;KSL.render();KSL.toast("Kode OTP dikirim ke WhatsApp "+wa,"msg")}
+    else{if(String(f.get("otp")).trim().length<4){KSL.toast("Masukkan 4 digit kode OTP","x");return}KSL.setAuth("ksl");KSL.toast("Verifikasi berhasil");setTimeout(()=>location.href="panel.html",500)}
+  }
+});
+</script>
+</body>
+</html>

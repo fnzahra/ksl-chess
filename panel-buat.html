@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buat turnamen · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="panel-buat" data-area="panel">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {icon,TERMS,TB}=KSL;
+// Pre-filled sample values so prototype testers can click Next -> Next -> Publish directly
+const st={step:0,published:false,name:"Turnamen Bulanan Desember",start:"2026-12-14",end:"",oneDay:true,time:"09:00",place:"Balai Desa Bugih, Pamekasan",fmt:"rr",classes:["Kelas A"],tb:null,bye:"1",arb:["Mukhlish"]};
+const SYS={rr:["Liga","Semua pemain saling bertemu sekali. Cocok untuk 10 pemain atau kurang."],swiss:["Swiss","Pemain dengan poin sama dipertemukan. Cocok untuk peserta banyak."],ko:["Gugur","Kalah langsung tersingkir. Cepat selesai."]};
+const S=["Info","Kelas & sistem","Wasit & ringkasan"];
+const tbList=()=>st.tb||(st.tb=TB[st.fmt].slice(0,4));
+const slug=()=>(st.name||"turnamen-baru").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const linkOf=()=>location.href.replace(/[^/]*$/,"")+"turnamen.html?t="+slug();
+const v=(k)=>String(st[k]).replace(/"/g,"&quot;");
+const dateText=()=>KSL.fmtDateRange(st.start,st.oneDay?"":st.end)+(st.time?" · "+st.time.replace(":",".")+" WIB":"");
+
+KSL.page(()=>{
+  if(st.published){
+    return `<h1 class="mb">Turnamen diterbitkan</h1>
+    <div class="card pad mb">
+      <div class="row nowrap mb">
+        <span class="av lg" style="background:var(--ok-soft);color:var(--ok)">${icon("check","lg")}</span>
+        <div><b>${st.name}</b><div class="sm mute">Siap menerima peserta. Tambahkan peserta sekarang atau bagikan link turnamen.</div></div>
+      </div>
+      <div class="card pad mb" style="background:var(--soft);box-shadow:none">
+        <div class="row between mb"><span class="pill acc">Preview turnamen</span><a class="lnk sm" href="segera.html" target="_blank" rel="noopener">Lihat halaman publik ${icon("right")}</a></div>
+        <table>${[["Nama",st.name],["Tanggal",dateText()],["Tempat",st.place||"-"],["Kelas",st.classes.join(", ")],["Sistem",SYS[st.fmt][0]+(st.fmt==="ko"?"":" · tie-break: "+tbList().join(", "))],["Wasit",st.arb.filter(Boolean).join(", ")]].map(([k,x])=>`<tr><td class="mute" style="width:1%">${k}</td><td><b>${x}</b></td></tr>`).join("")}</table>
+      </div>
+      <label>Link turnamen</label>
+      <div class="row nowrap"><input readonly value="${linkOf()}" onclick="this.select()"><button class="btn alt sm" data-act="copy">${icon("copy")}Salin</button></div>
+      <div class="hint mb">Bagikan link ini ke grup peserta. Peserta bisa melihat jadwal dan mendaftar tanpa login.</div>
+      <div class="row mt bt" style="padding-top:12px">
+        <a class="btn acc" href="panel-pemain.html">${icon("users")}Tambah peserta</a>
+        <a class="btn alt" href="panel-turnamen.html">${icon("trophy")}Kelola turnamen</a>
+        <a class="btn alt" href="panel.html">Ke Dashboard</a>
+      </div>
+    </div>`;
+  }
+
+  let f="";
+  if(st.step===0)f=`
+    <div class="field"><label>Nama turnamen</label><input data-k="name" value="${v("name")}" placeholder="contoh: Turnamen Bulanan Desember"></div>
+    <div class="grid g2e"><div class="field"><label>Tanggal mulai</label><input type="date" data-k="start" value="${st.start}"></div>
+      <div class="field"><label>Tanggal selesai</label><input type="date" data-k="end" value="${st.oneDay?st.start:st.end}" ${st.oneDay?"disabled":""}><label class="row nowrap sm mt2" style="font-weight:500"><input type="checkbox" data-k="oneDay" ${st.oneDay?"checked":""} style="width:auto;height:auto"> Selesai di hari yang sama</label></div></div>
+    <div class="grid g2e"><div class="field"><label>Jam mulai (opsional)</label><input type="time" data-k="time" value="${st.time}"></div><div class="field"><label>Tempat</label><input data-k="place" value="${v("place")}" placeholder="Nama tempat / alamat"></div></div>`;
+  if(st.step===1)f=`
+    <div class="field"><label>Kelas${KSL.tip("Satu kelas sudah cukup. Tambah kelas bila pemain dipisah, misalnya per kemampuan atau usia. Tiap kelas punya pairing dan klasemen sendiri.","Kelas")}</label>
+      <div class="tbl">${st.classes.map((k,i)=>`<div class="row nowrap"><input value="${k.replace(/"/g,"&quot;")}" data-cls="${i}" aria-label="Nama kelas ${i+1}"><button class="btn alt sm" data-act="rm" data-i="${i}" aria-label="Hapus ${k}" ${st.classes.length<2?"disabled":""}>${icon("x")}</button></div>`).join("")}</div>
+      <button class="chip mt" data-act="addk">${icon("plus")}Tambah kelas</button></div>
+    <div class="field"><label>Sistem pertandingan</label><div class="grid g3">${Object.entries(SYS).map(([k,[n,d]])=>`<button class="opt ${st.fmt===k?"on":""}" data-act="fmt" data-k="${k}"><b>${n}</b><span class="sm mute">${d}</span></button>`).join("")}</div></div>
+    ${st.fmt==="ko"?"":`<div class="field"><label>Penentu peringkat bila poin sama (tie-break)${KSL.tip("Dipakai berurutan dari nomor 1 sampai ada yang berbeda. Sudah diisi sesuai sistem, ubah hanya bila perlu.","Tie-break")}</label>
+      <div class="tbl">${tbList().map((t,i)=>`<div class="tbrow"><span class="tbn">${i+1}</span><div style="flex:1;min-width:0" class="row nowrap"><select data-tb="${i}">${TB[st.fmt].map(o=>`<option ${o===t?"selected":""}>${o}</option>`).join("")}</select>${KSL.tip(TERMS[t],t)}</div></div>`).join("")}</div></div>
+      <div class="field"><label>Poin bila tidak dapat lawan (bye)${KSL.tip(TERMS["Bye"],"Bye")}</label><select data-k="bye">${["1","½","0"].map(o=>`<option ${st.bye===o?"selected":""}>${o}</option>`).join("")}</select></div>`}`;
+  if(st.step===2)f=`
+    <div class="field"><label>Wasit${KSL.tip("Satu wasit cukup untuk turnamen kecil (sekitar 30 pemain / 15 meja). Tambah wasit bila meja lebih banyak atau ada beberapa kelas bersamaan. Semua wasit bisa mengisi hasil.","Wasit")}</label>
+      <div class="tbl">${st.arb.map((a,i)=>`<div class="row nowrap"><input value="${a.replace(/"/g,"&quot;")}" data-arb="${i}" aria-label="Wasit ${i+1}" placeholder="${i?"Wasit pembantu":"Wasit utama"}"><button class="btn alt sm" data-act="rma" data-i="${i}" ${i?"":"disabled"} aria-label="Hapus wasit">${icon("x")}</button></div>`).join("")}</div>
+      <button class="chip mt" data-act="adda">${icon("plus")}Tambah wasit</button></div>
+    <div class="mt bt" style="padding-top:10px">
+      <label>Ringkasan turnamen</label>
+      <table>${[["Nama",st.name],["Tanggal",dateText()],["Tempat",st.place||"-"],["Kelas",st.classes.join(", ")],["Sistem",SYS[st.fmt][0]+(st.fmt==="ko"?"":" · tie-break: "+tbList().join(", "))]].map(([k,x])=>`<tr><td class="mute" style="width:1%">${k}</td><td><b>${x}</b></td></tr>`).join("")}</table>
+    </div>`;
+  return `<h1 class="mb">Buat Turnamen</h1>
+  <div class="card pad">
+    <div class="prog"><div class="row between"><b>${S[st.step]}</b><span class="sm mute">${st.step+1} dari ${S.length}</span></div>
+      <div class="track"><i style="width:${(st.step+1)/S.length*100}%"></i></div>
+      <div class="labels">${S.map((x,i)=>`<span class="${i===st.step?"on":i<st.step?"done":""}">${i<st.step?icon("check"):""}${x}</span>`).join("")}</div></div>
+    ${f}
+    <div class="row between mt bt" style="padding-top:12px"><button class="btn alt" data-act="prev" ${st.step?"":"disabled"}>${icon("left")}Kembali</button><button class="btn ${st.step===2?"acc":""}" data-act="next">${st.step===2?icon("check")+"Terbitkan":"Lanjut"+icon("right")}</button></div>
+  </div>`},{
+  prev:()=>st.step=Math.max(0,st.step-1),
+  next:()=>{
+    if(st.step===0&&(!st.name.trim()||!st.start)){KSL.toast("Isi nama dan tanggal mulai dulu","x");return}
+    if(st.step===0&&!st.oneDay&&st.end&&st.end<st.start){KSL.toast("Tanggal selesai tidak boleh sebelum tanggal mulai","x");return}
+    if(st.step===1&&st.classes.some(c=>!c.trim())){KSL.toast("Nama kelas tidak boleh kosong","x");return}
+    if(st.step===2&&!st.arb[0].trim()){KSL.toast("Isi nama wasit utama","x");return}
+    if(st.step===2){st.published=true;KSL.toast("Turnamen diterbitkan");return}
+    st.step++},
+  fmt:el=>{st.fmt=el.dataset.k;st.tb=null},
+  addk:()=>st.classes.push("Kelas "+String.fromCharCode(65+st.classes.length)),
+  rm:el=>{const i=+el.dataset.i,n=st.classes[i];KSL.confirm("Hapus "+n+"?","Kelas ini dihapus dari turnamen yang sedang dibuat.","Hapus").then(ok=>{if(ok&&st.classes.length>1){st.classes.splice(i,1);KSL.render();KSL.toast(n+" dihapus","info")}})},
+  adda:()=>st.arb.push(""),rma:el=>st.arb.splice(+el.dataset.i,1),
+  copy:()=>{(navigator.clipboard?navigator.clipboard.writeText(linkOf()):Promise.reject()).then(()=>KSL.toast("Link disalin"),()=>KSL.toast("Gagal menyalin, salin manual dari kolom link","x"))}
+});
+document.addEventListener("input",e=>{const t=e.target,d=t.dataset;
+  if(d.k){st[d.k]=t.type==="checkbox"?t.checked:t.value;if(d.k==="oneDay")KSL.render()}
+  if(d.cls!=null)st.classes[+d.cls]=t.value;
+  if(d.arb!=null)st.arb[+d.arb]=t.value});
+document.addEventListener("change",e=>{const i=e.target.dataset.tb;if(i!=null){st.tb[+i]=e.target.value;KSL.render()}});
+</script>
+</body>
+</html>

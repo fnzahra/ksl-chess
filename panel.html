@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="panel" data-area="panel">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {TOURS,icon,pill,curRound,doneRounds}=KSL;
+KSL.page(()=>{
+  const mine=TOURS.filter(t=>t.org==="ksl"),live=mine.filter(t=>t.status==="live"&&t.classes);
+  const pend=KSL.pending().filter(p=>mine.some(t=>t.id===p.t));
+  // one "to do" row per class of every running tournament (several can run at once)
+  const todo=live.flatMap(t=>t.classes.map((c,i)=>{const cr=curRound(c),left=c.rounds[cr-1].filter(x=>!x.res).length;
+    return `<a href="panel-babak.html?t=${t.id}&kelas=${i}"><span class="ico">${icon("flag")}</span><div class="grow"><b>${t.name}</b><div class="sm mute">${c.name} · babak ${cr} · ${left?left+" meja belum ada hasil":"siap pairing babak berikutnya"}</div></div><span class="pill ${left?"live":"ok"}">${doneRounds(c)}/${c.rounds.length}</span>${icon("right")}</a>`}));
+  return `
+  <div class="row between mb"><h1>Dashboard</h1><a class="btn sm" href="panel-buat.html">${icon("plus")}Buat turnamen</a></div>
+  <div class="grid g4 mb">
+    <div class="card stat"><b>${live.length}</b><span>berlangsung</span></div>
+    <div class="card stat"><b>${mine.filter(t=>t.status==="soon").length}</b><span>dijadwalkan</span></div>
+    <div class="card stat"><b>${mine.filter(t=>t.status==="done").length}</b><span>selesai</span></div>
+    <div class="card stat"><b>${pend.length}</b><span>pendaftar baru</span></div>
+  </div>
+  <h3>Perlu tindakan</h3>
+  <div class="card list mb">${todo.join("")}
+    ${pend.length?`<a href="panel-pemain.html?t=${pend[0].t}"><span class="ico">${icon("users")}</span><div class="grow"><b>${pend.length} pendaftar menunggu konfirmasi</b><div class="sm mute">Terima atau tolak di halaman Peserta</div></div>${icon("right")}</a>`:""}
+    <a href="panel-penyelenggara.html"><span class="ico">${icon("org")}</span><div class="grow"><b>Ruang Catur mendaftar sebagai penyelenggara</b><div class="sm mute">Menunggu persetujuan</div></div><span class="pill acc">Baru</span>${icon("right")}</a>
+  </div>
+  <h3>Turnamen saya</h3>
+  <div class="card tscroll"><table>
+    <tr><th>Turnamen</th><th class="dsk">Tanggal</th><th>Status</th><th></th></tr>
+    ${mine.map(t=>`<tr><td><b>${t.name}</b><div class="sm mute">${t.sys}</div></td><td class="dsk">${t.date}</td><td>${pill(t.status)}</td><td class="r"><a class="btn alt sm" href="panel-turnamen.html?t=${t.id}">${t.status==="done"?"Lihat":"Kelola"}</a></td></tr>`).join("")}
+  </table></div>`});
+</script>
+</body>
+</html>

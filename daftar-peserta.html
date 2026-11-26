@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daftar jadi peserta · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="daftar-peserta" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {TOURS,icon,qp,av,CLUBS,PLAYERS,clubName}=KSL;
+const T=TOURS.find(t=>t.id===qp("t"))||TOURS.find(t=>t.status==="soon");
+const CL=T.classes||[{name:"Umum"}];
+const back=T.classes?"turnamen.html?t="+T.id:"segera.html?t="+T.id;
+// step: find (search own profile) -> form -> done. Picking an existing profile avoids duplicates.
+const st={step:"find",q:"",open:false,pick:null,newClub:false,done:null};
+const already=pid=>(T.reg||[]).some(r=>r.pid===pid)||KSL.pending().some(p=>p.t===T.id&&p.pid===pid);
+KSL.page(()=>{
+  if(st.done)return `<div class="card pad" style="max-width:440px;margin:24px auto;text-align:center">
+    <span class="av lg" style="background:var(--ok-soft);color:var(--ok)">${icon("check","lg")}</span>
+    <h1 class="mt">Pendaftaran terkirim</h1>
+    <div class="sm mute mt2">${st.done.name} · ${st.done.pid||"ID dibuat setelah diterima panitia"}</div>
+    <div class="sm mt">Panitia akan menghubungi <b>${st.done.hp}</b> (WhatsApp / email) untuk konfirmasi pendaftaran.</div>
+    <a class="btn alt mt" href="${back}">Kembali ke turnamen</a></div>`;
+  const ql=st.q.trim().toLowerCase();
+  const found=PLAYERS.filter(p=>!ql||(p.name+" "+p.pid+" "+clubName(p.club)).toLowerCase().includes(ql));
+  return `<a class="back" href="${back}">${icon("left")}${T.name}</a>
+  <div class="card" style="max-width:560px">
+    <div class="pad"><h1>Daftar Jadi Peserta</h1><div class="meta mt2"><span>${icon("cal")}${T.date}</span><span>${icon("pin")}${T.place}</span></div></div>
+    ${st.step==="find"?`
+    <div class="pad bt">
+      <label>Pernah ikut turnamen di aplikasi ini?${KSL.tip("Cari profilmu supaya tidak dibuat profil ganda. Rating dan riwayatmu ikut terbawa.","Profil pemain")}</label>
+      <div class="combo">
+        <div class="input-ic">${icon("search")}<input id="pq" placeholder="Cari nama, ID (TC-…), atau klub" value="${st.q}" autocomplete="off"></div>
+        ${st.open?(found.length?`<div class="pick">${found.map(p=>`<button type="button" data-act="me" data-pid="${p.pid}" ${already(p.pid)?"disabled":""}>${av(p.name)}<span class="grow"><b>${p.name}</b><span class="pid" style="display:block">${p.pid} · ${clubName(p.club)}</span></span><span class="sm">${KSL.ratingNow(p.pid)}</span>${already(p.pid)?'<span class="pill">Sudah daftar</span>':icon("right")}</button>`).join("")}</div>`:`<div class="pick"><div class="pad sm mute">Tidak ditemukan.</div></div>`):""}
+      </div>
+      <div class="hint">Klik kolom cari untuk melihat daftar pemain, ketik untuk menyaring.</div>
+      <button class="btn alt block mt" data-act="new">${icon("plus")}Saya belum punya profil</button>
+    </div>`:`
+    <form class="pad bt" id="f">
+      ${st.pick?`<div class="row nowrap mb">${av(st.pick.name)}<div class="grow"><b>${st.pick.name}</b><div class="pid">${st.pick.pid} · ${clubName(st.pick.club)}</div></div><a href="#" class="lnk sm" data-act="back">Ganti</a></div>`:`
+      <div class="field"><label>Nama lengkap</label><input name="name" required placeholder="Sesuai identitas"></div>
+      <div class="field"><label>Klub asal</label>${st.newClub?`<div class="row nowrap"><input name="club" required placeholder="Nama klub baru"><a href="#" class="lnk sm" data-act="clubList">Pilih dari daftar</a></div>`:`<select name="club">${CLUBS.map(c=>`<option value="${c.id}">${c.name}</option>`).join("")}<option value="-">Tanpa klub</option></select><a href="#" class="lnk sm" data-act="clubNew">+ Klub belum ada di daftar</a>`}</div>`}
+      ${CL.length>1?`<div class="field"><label>Kelas</label><select name="k">${CL.map((c,i)=>`<option value="${i}">${c.name}</option>`).join("")}</select></div>`:""}
+      <div class="field"><label>No. WhatsApp atau Email${KSL.tip("Untuk verifikasi & konfirmasi panitia di luar sistem. Tidak tampil di publik.","Verifikasi peserta")}</label><input name="hp" required placeholder="08xx atau nama@email.com"></div>
+      <label class="row nowrap sm" style="color:var(--ink);font-weight:500;align-items:flex-start"><input type="checkbox" required style="width:auto;height:auto;margin-top:2px"> Saya (atau orang tua/wali bila di bawah 17 tahun) setuju data ini dipakai untuk turnamen ini.</label>
+      <button class="btn block mt" type="submit">Kirim pendaftaran</button>
+    </form>`}
+  </div>`;
+},{
+  me:el=>{const p=PLAYERS.find(x=>x.pid===el.dataset.pid);if(already(p.pid)){KSL.toast("Kamu sudah terdaftar di turnamen ini","x");return}st.pick=p;st.open=false;st.step="form"},
+  new:()=>{st.pick=null;st.step="form"},
+  back:()=>{st.step="find"},
+  clubNew:()=>{st.newClub=true},clubList:()=>{st.newClub=false}
+});
+document.addEventListener("focusin",e=>{if(e.target.id!=="pq"||st.open)return;st.open=true;KSL.render();const f=document.getElementById("pq");f.focus()});
+document.addEventListener("mousedown",e=>{if(st.open&&!e.target.closest(".combo")){st.open=false;KSL.render()}});
+document.addEventListener("input",e=>{if(e.target.id!=="pq")return;st.q=e.target.value;st.open=true;const pos=e.target.selectionStart;KSL.render();const f=document.getElementById("pq");f.focus();f.setSelectionRange(pos,pos)});
+document.addEventListener("submit",e=>{
+  e.preventDefault();const f=new FormData(e.target);
+  const name=st.pick?st.pick.name:(f.get("name")||"").trim();if(!name){KSL.toast("Nama wajib diisi","x");return}
+  const club=st.pick?clubName(st.pick.club):st.newClub?f.get("club").trim():(f.get("club")==="-"?"Tanpa klub":clubName(f.get("club")));
+  const hp=(f.get("hp")||"").trim();if(!hp){KSL.toast("No. WhatsApp atau email wajib diisi","x");return}
+  const p={t:T.id,k:+f.get("k")||0,pid:st.pick?st.pick.pid:null,name,club,hp,at:Date.now()};
+  KSL.setPending(KSL.pending().concat(p));st.done=p;KSL.render();KSL.toast("Pendaftaran terkirim");
+});
+</script>
+</body>
+</html>

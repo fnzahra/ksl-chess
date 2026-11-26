@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peserta · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="panel-pemain" data-area="panel">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {T,icon,kelas,link,av,CLUBS,PLAYERS,clubName}=KSL;
+// add: "db" = pick existing player by name/ID, "new" = create profile; q = search text
+const st={add:"db",showAdd:false,q:"",open:false,newClub:false,ed:null};
+KSL.page(()=>{
+  const c=T.classes[kelas()],inClass=pid=>c.players.some(p=>p.pid===pid);
+  const pend=KSL.pending().map((p,i)=>({...p,i})).filter(p=>p.t===T.id&&p.k===kelas());
+  const fbs=KSL.feedback().map((x,i)=>({...x,i})).filter(x=>x.t===T.id);
+  const ql=st.q.trim().toLowerCase(),found=PLAYERS.filter(p=>!ql||(p.name+" "+p.pid+" "+clubName(p.club)).toLowerCase().includes(ql));
+  return `
+  ${KSL.panelTourHead("panel-pemain")}
+  <div class="grid g-side">
+    <div class="grid">
+      <button class="btn acc block" data-act="toggleAdd">${icon(st.showAdd?"x":"plus")}${st.showAdd?"Tutup form":"Tambah peserta"}</button>
+      <div class="card list">
+        ${T.classes.map((k,i)=>`<a href="${link("panel-pemain.html",{kelas:i})}" class="${i===kelas()?"b":""}" style="${i===kelas()?"background:var(--brand-soft);color:var(--brand)":""}"><span class="grow">${k.name}</span><span class="pill">${k.players.length}</span></a>`).join("")}
+      </div>
+      <label class="btn alt block" style="margin:0;color:var(--ink)">${icon("upload")}Impor CSV<input type="file" id="csv" accept=".csv,text/csv" hidden></label>
+    </div>
+    <div>
+      ${pend.length?`<div class="card mb"><div class="pad"><b>Pendaftar baru (${pend.length})</b></div><div class="list bt">${pend.map(p=>`<div><span class="who grow">${av(p.name)}<span><b>${p.name}</b><div class="pid">${p.pid||"Profil baru"} · ${p.club}${p.hp?" · "+p.hp:""}</div></span></span><button class="btn sm" data-act="acc" data-i="${p.i}">${icon("check")}Terima</button><button class="btn alt sm" data-act="rej" data-i="${p.i}">Tolak</button></div>`).join("")}</div></div>`:""}
+      ${st.showAdd?`<div class="card mb">
+        <div class="pad row between">
+          <div class="seg"><button class="${st.add==="db"?"on":""}" data-act="mode" data-m="db">Pilih dari database</button><button class="${st.add==="new"?"on":""}" data-act="mode" data-m="new">Pemain baru</button></div>
+          <button class="btn alt sm" data-act="toggleAdd" aria-label="Tutup">${icon("x")}</button>
+        </div>
+        <div class="pad bt">
+          ${st.add==="db"?`
+            <div class="combo">
+              <div class="input-ic">${icon("search")}<input id="pq" placeholder="Cari nama, ID (TC-…), atau klub" value="${st.q}" autocomplete="off"></div>
+              ${st.open?(found.length?`<div class="pick">${found.map(p=>`<button type="button" data-act="pickp" data-pid="${p.pid}" ${inClass(p.pid)?"disabled":""}>${av(p.name)}<span class="grow"><b>${p.name}</b><span class="pid" style="display:block">${p.pid} · ${clubName(p.club)}</span></span><span class="sm">${KSL.ratingNow(p.pid)}</span>${inClass(p.pid)?'<span class="pill">Sudah ikut</span>':icon("plus")}</button>`).join("")}</div>`:`<div class="pick"><div class="pad sm mute">Tidak ditemukan. <a href="#" class="lnk" data-act="mode" data-m="new">Tambah pemain baru</a></div></div>`):""}
+            </div>`:`
+            <form id="np" class="grid g2e">
+              <div class="field"><label>Nama lengkap</label><input name="name" required></div>
+              <div class="field"><label>Gelar (opsional)</label><select name="title">${KSL.TITLES.map(t=>`<option value="${t}">${t||"- (Tanpa gelar)"}</option>`).join("")}</select></div>
+              <div class="field"><label>Rating awal${KSL.tip("Kosongkan bila belum punya rating. Nanti dihitung otomatis dari hasil partai.","Rating awal")}</label><input name="rtg" inputmode="numeric" placeholder="Belum ada"></div>
+              <div class="field"><label>Klub asal</label>${st.newClub?`<input name="club" required placeholder="Nama klub baru"><a href="#" class="lnk sm" data-act="clubList">Pilih dari daftar</a>`:`<select name="club">${CLUBS.map(k=>`<option value="${k.id}">${k.name}</option>`).join("")}<option value="-">Tanpa klub</option></select><a href="#" class="lnk sm" data-act="clubNew">+ Klub baru</a>`}</div>
+              <div class="field"><label>No. WhatsApp / Email (opsional)${KSL.tip("Untuk verifikasi peserta. Hanya terlihat oleh panitia turnamen ini.","Data pribadi")}</label><input name="hp" placeholder="08xx atau nama@email.com"></div>
+              <div style="align-self:end;margin-bottom:8px"><button class="btn block" type="submit">${icon("plus")}Tambah ke ${c.name}</button></div>
+            </form>`}
+        </div>
+      </div>`:""}
+      <div class="card tscroll"><table>
+        <tr><th class="n">#</th><th class="n">Kode</th><th>Pemain</th><th class="n">Rating</th><th class="dsk">Klub</th><th class="r"></th></tr>
+        ${c.players.map((p,i)=>st.ed===i?`<tr><td colspan="6"><form id="ep" class="grid g4" style="align-items:center"><select name="title" aria-label="Gelar">${KSL.TITLES.map(t=>`<option value="${t}" ${p.title===t?"selected":""}>${t||"-"}</option>`).join("")}</select><input name="name" value="${p.name}" required aria-label="Nama"><input name="rtg" value="${p.rtg}" inputmode="numeric" aria-label="Rating"><input name="club" value="${p.club}" aria-label="Klub"><div class="row nowrap" style="grid-column:1/-1"><button class="btn sm" type="submit">Simpan</button><button class="btn alt sm" type="button" data-act="ecancel">Batal</button></div></form></td></tr>`:
+          `<tr><td class="n mute sm">${i+1}</td><td class="n pid">${p.pid}</td><td><span class="who">${av(p.name)}<span>${KSL.titleBadge(p.title)}<b>${p.name}</b></span></span></td><td class="n">${p.rtg||"-"}</td><td class="dsk sm mute">${p.club}</td><td class="r"><div class="row nowrap" style="justify-content:flex-end;gap:4px"><button class="btn alt sm" data-act="edit" data-i="${i}" aria-label="Ubah ${p.name}">${icon("edit")}</button><button class="btn alt sm" data-act="del" data-i="${i}" aria-label="Keluarkan ${p.name}">${icon("x")}</button></div></td></tr>`).join("")}
+      </table></div>
+      ${fbs.length?`<div class="card mt"><div class="pad"><b>Koreksi data dari publik (${fbs.length})</b></div><div class="list bt">${fbs.map(x=>`<div><div class="grow"><div class="sm">${x.msg}</div><div class="pid">${x.who}${x.ctx?" · "+x.ctx:""}</div></div><button class="btn alt sm" data-act="fbDone" data-i="${x.i}">${icon("check")}Selesai</button></div>`).join("")}</div></div>`:""}
+    </div>
+  </div>`;
+},{
+  toggleAdd:()=>{st.showAdd=!st.showAdd;st.open=false},
+  mode:el=>{st.add=el.dataset.m},
+  clubNew:()=>{st.newClub=true},clubList:()=>{st.newClub=false},
+  pickp:el=>{const c=T.classes[kelas()],p=PLAYERS.find(x=>x.pid===el.dataset.pid);if(c.players.some(x=>x.pid===p.pid)){KSL.toast(p.name+" sudah ada di kelas ini","x");return}
+    c.players.push({id:c.players.length,pid:p.pid,name:p.name,rtg:KSL.ratingNow(p.pid),games:p.games,club:clubName(p.club),pay:T.fee?"belum":"gratis"});st.q="";st.open=false;KSL.save();KSL.toast(p.name+" ("+p.pid+") ditambahkan")},
+  pay:el=>{const p=T.classes[kelas()].players[+el.dataset.i];p.pay=p.pay==="lunas"?"belum":"lunas";KSL.save();KSL.toast(p.name+": "+(p.pay==="lunas"?"ditandai lunas":"ditandai belum bayar"),p.pay==="lunas"?"check":"info")},
+  edit:el=>{st.ed=+el.dataset.i},ecancel:()=>{st.ed=null},
+  del:el=>{const c=T.classes[kelas()],i=+el.dataset.i,p=c.players[i],started=c.rounds.some(g=>g.some(x=>x.res&&(x.w===i||x.b===i)));
+    if(started){KSL.toast(p.name+" sudah bermain, tidak bisa dikeluarkan. Gunakan WO untuk babak berikutnya.","x",3200);return}
+    KSL.confirm("Keluarkan "+p.name+"?",p.pid+" dikeluarkan dari "+c.name+". Profil pemain tetap ada di database.","Keluarkan").then(ok=>{if(!ok)return;c.players.splice(i,1);c.players.forEach((x,j)=>x.id=j);KSL.save();KSL.render();KSL.toast(p.name+" dikeluarkan")})},
+  acc:el=>{const a=KSL.pending(),p=a.splice(+el.dataset.i,1)[0],c=T.classes[p.k];
+    if(p.pid&&c.players.some(x=>x.pid===p.pid)){KSL.setPending(a);KSL.toast(p.name+" sudah terdaftar, pendaftaran ganda dihapus","info");return}
+    const pid=p.pid||"TC-"+String(1001+PLAYERS.length).padStart(5,"0");if(!p.pid)PLAYERS.push({pid,name:p.name,rtg:1200,club:"-",games:0});
+    c.players.push({id:c.players.length,pid,name:p.name,rtg:p.pid?KSL.ratingNow(p.pid):1200,games:0,club:p.club,pay:p.pay||"belum"});KSL.setPending(a);KSL.save();KSL.toast(p.name+" diterima · "+pid)},
+  rej:el=>{const a=KSL.pending(),p=a[+el.dataset.i];KSL.confirm("Tolak pendaftaran "+p.name+"?","Pendaftaran dihapus. Pemain perlu mendaftar ulang bila ditolak karena keliru.","Tolak").then(ok=>{if(!ok)return;a.splice(+el.dataset.i,1);KSL.setPending(a);KSL.render();KSL.toast("Pendaftaran "+p.name+" ditolak","info")})},
+  fbDone:el=>{const a=KSL.feedback();a.splice(+el.dataset.i,1);KSL.setFeedback(a);KSL.toast("Koreksi ditandai selesai")}
+});
+document.addEventListener("focusin",e=>{if(e.target.id!=="pq"||st.open)return;st.open=true;KSL.render();const f=document.getElementById("pq");f.focus()});
+document.addEventListener("mousedown",e=>{if(st.open&&!e.target.closest(".combo")){st.open=false;KSL.render()}});
+document.addEventListener("input",e=>{if(e.target.id!=="pq")return;st.q=e.target.value;st.open=true;const pos=e.target.selectionStart;KSL.render();const f=document.getElementById("pq");f.focus();f.setSelectionRange(pos,pos)});
+document.addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),c=T.classes[kelas()];
+  if(e.target.id==="np"){const name=f.get("name").trim();if(!name){KSL.toast("Nama wajib diisi","x");return}
+    const title=(f.get("title")||"").trim(),club=st.newClub?f.get("club").trim():(f.get("club")==="-"?"Tanpa klub":clubName(f.get("club")));
+    const pid="TC-"+String(1001+PLAYERS.length).padStart(5,"0");PLAYERS.push({pid,name,title,rtg:+f.get("rtg")||1200,club:f.get("club"),games:0});
+    c.players.push({id:c.players.length,pid,name,title,rtg:+f.get("rtg")||1200,games:0,club,pay:T.fee?"belum":"gratis"});KSL.save();st.add="db";KSL.render();KSL.toast(name+" ditambahkan · ID "+pid)}
+  if(e.target.id==="ep"){const p=c.players[st.ed],name=f.get("name").trim();if(!name){KSL.toast("Nama tidak boleh kosong","x");return}
+    p.title=(f.get("title")||"").trim();p.name=name;p.rtg=+f.get("rtg")||p.rtg;p.club=f.get("club").trim()||p.club;st.ed=null;KSL.save();KSL.render();KSL.toast("Data "+name+" disimpan")}});
+// CSV import: "Nama,Rating,Klub" per line (header optional)
+document.addEventListener("change",e=>{if(e.target.id!=="csv"||!e.target.files[0])return;
+  e.target.files[0].text().then(t=>{const c=T.classes[kelas()];let n=0;
+    t.split(String.fromCharCode(10)).map(l=>l.split(/[;,]/).map(x=>x.trim())).filter(r=>r[0]&&!/^nama$/i.test(r[0])).forEach(([nm,rt,cl])=>{const pid="TC-"+String(1001+PLAYERS.length).padStart(5,"0");PLAYERS.push({pid,name:nm,rtg:+rt||1200,club:cl,games:0});c.players.push({id:c.players.length,pid,name:nm,rtg:+rt||1200,games:0,club:cl||"-",pay:T.fee?"belum":"gratis"});n++});
+    KSL.save();KSL.render();KSL.toast(n?n+" pemain diimpor":"Tidak ada baris yang bisa dibaca",n?"upload":"x")}).catch(()=>KSL.toast("File tidak bisa dibaca","x"))});
+</script>
+</body>
+</html>

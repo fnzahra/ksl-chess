@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kelola Turnamen · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="panel-turnamen" data-area="panel">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {TOURS,icon,pill,curRound,doneRounds,qp,standings,fmt,av,num}=KSL;
+const tid=qp("t"),subTab=qp("tab","");
+const T=tid?TOURS.find(t=>t.id===tid):null;
+let edit=false,q="",stFilter="all",clsIdx=+(qp("kelas",0)||0);
+
+KSL.page(()=>{
+  if(!T){
+    const ql=q.trim().toLowerCase();
+    const mine=TOURS.filter(t=>t.org==="ksl")
+      .filter(t=>stFilter==="all"||t.status===stFilter)
+      .filter(t=>!ql||(t.name+" "+t.place+" "+t.sys).toLowerCase().includes(ql));
+    return `
+    <div class="row between mb"><h1>Kelola Turnamen</h1><a class="btn acc sm" href="panel-buat.html">${icon("plus")}Buat Turnamen</a></div>
+    <div class="card pad mb">
+      <div class="row between" style="gap:8px">
+        <div class="input-ic" style="flex:1;min-width:200px">${icon("search")}<input id="tq" placeholder="Cari nama turnamen, tempat, atau sistem" value="${q}" autocomplete="off"></div>
+        <div class="seg">${[["all","Semua"],["live","Berlangsung"],["soon","Segera"],["done","Selesai"]].map(([k,l])=>`<button type="button" class="${stFilter===k?"on":""}" data-act="flt" data-k="${k}">${l}</button>`).join("")}</div>
+      </div>
+    </div>
+    <div class="card list">
+      ${mine.map(t=>`<a href="panel-turnamen.html?t=${t.id}">
+        <span class="ico">${icon("trophy")}</span>
+        <div class="grow"><b>${t.name}</b><div class="meta mt2"><span>${icon("cal")}${t.date}</span><span>${icon("pin")}${t.place}</span><span>${icon("list")}${t.sys}</span></div></div>
+        ${pill(t.status)}${icon("right")}
+      </a>`).join("")||'<div class="pad sm mute">Tidak ada turnamen yang cocok.</div>'}
+    </div>`;
+  }
+
+  const classes=T.classes||[];
+  if(subTab==="klasemen"){
+    if(!classes.length)return `<a class="back" href="panel-turnamen.html">${icon("left")}Semua turnamen saya</a>${KSL.panelTourHead("panel-turnamen",T,"klasemen")}<div class="card pad sm mute">Turnamen ini belum dimulai sehingga belum ada klasemen.</div>`;
+    const c=classes[Math.min(clsIdx,classes.length-1)],s=standings(c);
+    return `<a class="back" href="panel-turnamen.html">${icon("left")}Semua turnamen saya</a>
+    ${KSL.panelTourHead("panel-turnamen",T,"klasemen")}
+    ${classes.length>1?`<div class="seg mb">${classes.map((k,i)=>`<button type="button" class="${i===clsIdx?"on":""}" data-act="cls" data-i="${i}">${k.name}</button>`).join("")}</div>`:""}
+    <div class="card tscroll"><table>
+      <tr><th class="n">#</th><th>Pemain</th><th class="n">Main</th><th class="n">M</th><th class="n">S</th><th class="n">K</th><th class="n">Poin</th><th class="n">SB</th></tr>
+      ${s.map((p,i)=>`<tr><td class="n"><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span></td><td><span class="who">${av(p.name)}<span><b>${p.name}</b> <span class="pid">${p.pid}</span></span></span></td><td class="n">${p.w+p.d+p.l}</td><td class="n">${p.w}</td><td class="n">${p.d}</td><td class="n">${p.l}</td><td class="n b">${fmt(p.pts)}</td><td class="n sm mute">${num(p.sb)}</td></tr>`).join("")}
+    </table></div>`;
+  }
+
+  const totalPlayers=classes.reduce((a,c)=>a+c.players.length,0)||(T.reg?T.reg.length:0);
+  const pend=KSL.pending().filter(p=>p.t===T.id).length;
+  const doneR=classes.reduce((a,c)=>a+doneRounds(c),0);
+  const totalR=classes.reduce((a,c)=>a+c.rounds.length,0);
+  return `<a class="back" href="panel-turnamen.html">${icon("left")}Semua turnamen saya</a>
+  ${KSL.panelTourHead("panel-turnamen",T)}
+  <div class="grid g4 mb">
+    <div class="card stat"><b>${totalPlayers}</b><span>peserta</span></div>
+    <div class="card stat"><b>${classes.length||1}</b><span>kelas</span></div>
+    <div class="card stat"><b>${totalR?doneR+"/"+totalR:"-"}</b><span>babak selesai</span></div>
+    <div class="card stat"><b>${pend}</b><span>pendaftar baru</span></div>
+  </div>
+  <div class="grid g2">
+    <div>
+      ${classes.length?`<h3>Kelas & progres</h3>
+      <div class="grid ${classes.length>1?"g2e":""} mb">${classes.map((c,i)=>{const cr=curRound(c),d=doneRounds(c),n=c.rounds.length,left=c.rounds[cr-1].filter(x=>!x.res).length;return `
+        <div class="card pad">
+          <div class="row between"><b>${c.name}</b><span class="pill ${left?"live":"ok"}">Babak ${cr}/${n}</span></div>
+          <div class="sm mute mt2">${c.players.length} pemain · ${left?left+" meja belum ada hasil":"babak lengkap"}</div>
+          <div class="bar mt"><i style="width:${d/n*100}%"></i></div>
+          <div class="row mt">
+            <a class="btn sm" href="panel-babak.html?t=${T.id}&kelas=${i}">${icon("flag")}Babak & Hasil</a>
+            <a class="btn alt sm" href="panel-pemain.html?t=${T.id}&kelas=${i}">${icon("users")}Peserta</a>
+          </div>
+        </div>`}).join("")}</div>`:`
+      <h3>Turnamen Dijadwalkan</h3>
+      <div class="card pad mb">
+        <div class="sm mute">Turnamen ini belum dimulai. Pendaftar yang masuk bisa dikonfirmasi sebelum babak 1 dibuat.</div>
+        <div class="row mt"><a class="btn acc sm" href="panel-pemain.html">${icon("users")}Kelola pendaftar</a></div>
+      </div>`}
+      <div class="row between mb"><h3>Informasi Turnamen</h3><button class="lnk sm" data-act="toggleEdit">${edit?"Batal":icon("edit")+" Ubah info"}</button></div>
+      <div class="card ${edit?"pad":""}">
+        ${edit?(()=>{
+          const startIso=T.iso||(T.start?T.start.slice(0,10):"2026-07-12");
+          const endIso=T.endIso||startIso;
+          const oneDay=!T.endIso||T.endIso===startIso;
+          const tm=(T.time||"").match(/(\d{2})[:.](\d{2})/);
+          const timeVal=tm?`${tm[1]}:${tm[2]}`:"";
+          return`<form id="ef">
+          <div class="field"><label>Nama turnamen</label><input name="name" value="${T.name.replace(/"/g,"&quot;")}" required></div>
+          <div class="grid g2e">
+            <div class="field"><label>Tanggal mulai</label><input type="date" name="iso" value="${startIso}" required></div>
+            <div class="field"><label>Tanggal selesai</label><input type="date" name="endIso" value="${endIso}" min="${startIso}" ${oneDay?"disabled":""}></div>
+          </div>
+          <label class="row sm mb" style="gap:8px;cursor:pointer"><input type="checkbox" id="efOneDay" name="oneDay" ${oneDay?"checked":""}><span class="sm">Selesai di hari yang sama</span></label>
+          <div class="grid g2e">
+            <div class="field"><label>Jam mulai (opsional)</label><input type="time" name="time" value="${timeVal}"></div>
+            <div class="field"><label>Tempat</label><input name="place" value="${(T.place||"").replace(/"/g,"&quot;")}" required></div>
+          </div>
+          <div class="row"><button class="btn acc sm" type="submit">${icon("check")}Simpan perubahan</button><button class="btn alt sm" type="button" data-act="toggleEdit">Batal</button></div>
+        </form>`;
+        })():`
+        <table>${[["Nama",T.name],["Tanggal",T.date],["Jam",T.time||"-"],["Tempat",T.place],["Sistem",T.sys],["Wasit",(T.arb||["-"]).join(", ")]].map(([k,v])=>`<tr><td class="mute" style="width:1%">${k}</td><td><b>${v}</b></td></tr>`).join("")}</table>`}
+      </div>
+    </div>
+    <div>
+      <h3>Aksi Cepat</h3>
+      <div class="card list">
+        <a href="panel-babak.html?t=${T.id}"><span class="ico">${icon("flag")}</span><div class="grow"><b>Input hasil & pairing</b><div class="sm mute">Kelola meja dan babak berikutnya</div></div>${icon("right")}</a>
+        <a href="panel-pemain.html?t=${T.id}"><span class="ico">${icon("users")}</span><div class="grow"><b>Tambah & kelola peserta</b><div class="sm mute">Terima pendaftar baru atau impor CSV</div></div>${icon("right")}</a>
+        <a href="panel-turnamen.html?t=${T.id}&tab=klasemen"><span class="ico">${icon("trophy")}</span><div class="grow"><b>Lihat klasemen</b><div class="sm mute">Peringkat sementara dan tie-break</div></div>${icon("right")}</a>
+      </div>
+    </div>
+  </div>`;
+},{
+  flt:el=>{stFilter=el.dataset.k},
+  cls:el=>{clsIdx=+el.dataset.i},
+  toggleEdit:()=>{edit=!edit}
+});
+document.addEventListener("input",e=>{if(e.target.id!=="tq")return;q=e.target.value;const pos=e.target.selectionStart;KSL.render();const f=document.getElementById("tq");f.focus();f.setSelectionRange(pos,pos)});
+document.addEventListener("change",e=>{
+  const ef=e.target.closest&&e.target.closest("#ef");if(!ef)return;
+  const endEl=ef.querySelector('[name="endIso"]'),isoEl=ef.querySelector('[name="iso"]'),oneEl=ef.querySelector('#efOneDay');
+  if(e.target===oneEl&&endEl){endEl.disabled=oneEl.checked;if(oneEl.checked&&isoEl)endEl.value=isoEl.value;}
+  if(e.target===isoEl&&endEl){endEl.min=isoEl.value;if(oneEl&&oneEl.checked||endEl.value<isoEl.value)endEl.value=isoEl.value;}
+});
+document.addEventListener("submit",e=>{
+  if(e.target.id!=="ef"||!T)return;e.preventDefault();const f=new FormData(e.target);
+  T.name=f.get("name").trim()||T.name;
+  T.iso=f.get("iso")||T.iso;
+  const sameDay=!!f.get("oneDay");
+  const rawEnd=f.get("endIso");
+  T.endIso=(!sameDay&&rawEnd&&rawEnd>T.iso)?rawEnd:"";
+  T.date=KSL.fmtDateRange(T.iso,T.endIso);
+  const tv=(f.get("time")||"").trim();
+  T.time=tv?tv.replace(":",".")+" WIB":"";
+  T.place=f.get("place").trim()||T.place;
+  KSL.saveMeta(T);
+  edit=false;KSL.render();KSL.toast("Informasi turnamen disimpan");
+});
+</script>
+</body>
+</html>

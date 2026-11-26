@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Babak dan hasil · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="panel-babak" data-area="panel">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {T,icon,kelas,qp,link,curRound}=KSL;
+let r=null,swap=false,pick=null,wo=null; // pick = [board,"w"|"b"]; wo = board index while the forfeit dialog is open
+const nameBtn=(c,x,i,sd)=>swap?`<button class="nm chip ${pick&&pick[0]===i&&pick[1]===sd?"on":""}" data-act="pick" data-b="${i}" data-s="${sd}">${c.players[x[sd]].name}</button>`:`<span class="nm">${c.players[x[sd]].name}</span>`;
+KSL.page(()=>{
+  const c=T.classes[kelas()],cr=curRound(c);
+  if(r==null)r=Math.min(+qp("babak",cr)||cr,c.pub);
+  const g=c.rounds[r-1],left=g.filter(x=>!x.res).length,last=r===c.rounds.length,wx=wo!=null?g[wo]:null;
+  return `
+  ${KSL.panelTourHead("panel-babak")}
+  <div class="card">
+    <div class="pad row between">
+      <div class="row">${T.classes.length>1?`<div class="seg">${T.classes.map((k,i)=>`<a class="${i===kelas()?"on":""}" href="${link("panel-babak.html",{kelas:i,babak:null})}">${k.name}</a>`).join("")}</div>`:""}
+      <div class="seg">${c.rounds.map((_,i)=>`<a class="${i+1===r?"on":""} ${i+1>c.pub?"off":""}" href="#" data-act="round" data-r="${i+1}">${i+1}</a>`).join("")}</div></div>
+      <span class="pill ${left?"live":"ok"}">${left?left+" meja belum ada hasil":"Babak "+r+" lengkap"}</span>
+    </div>
+    ${g.map((x,i)=>`<div class="board bt rb" style="grid-template-columns:28px 1fr auto">
+      <span class="no">${i+1}</span>
+      <span class="row nowrap" style="min-width:0;gap:6px"><i class="sq w"></i>${nameBtn(c,x,i,"w")}<span class="mute sm">vs</span>${nameBtn(c,x,i,"b")}<i class="sq k"></i></span>
+      ${swap?`<button class="btn alt sm" data-act="color" data-b="${i}" ${x.res?"disabled":""}>${icon("swap")}Warna</button>`:`<span class="row nowrap" style="gap:4px"><span class="seg">${["1-0","½-½","0-1"].map(v=>`<button class="${x.res===v?"on":""}" data-act="res" data-b="${i}" data-v="${v}">${v}</button>`).join("")}</span><button class="chip ${KSL.forfeit(x.res)?"on":""}" data-act="wo" data-b="${i}" title="Pemain tidak hadir">${KSL.forfeit(x.res)?KSL.resLabel(x.res):"WO"}</button></span>`}
+    </div>`).join("")}
+    <div class="pad bt row between">
+      <span class="sm mute">${swap?"Ketuk dua nama":""}${KSL.tip(swap?"Ketuk dua nama untuk menukar lawan, atau tombol Warna untuk menukar putih/hitam. Meja yang sudah ada hasilnya tidak bisa diubah.":"Ketuk hasil untuk menyimpan, ketuk lagi untuk membatalkan. WO dipakai hanya bila pemain tidak hadir.",swap?"Ubah pairing":"Isi hasil")}</span>
+      <div class="row"><button class="btn ${swap?"":"alt"} sm" data-act="swap">${icon(swap?"check":"edit")}${swap?"Selesai mengubah":"Ubah pairing"}</button>
+      ${left?`<button class="btn alt sm" data-act="sim">${icon("swap")}Isi acak (simulasi)</button>`:`<a class="btn alt sm" href="${link("klasemen.html",{setelah:r})}">${icon("trophy")}Lihat klasemen</a>`}<button class="btn sm ${left?"alt":"acc"}" data-act="next" ${left||last||r<c.pub?"disabled":""}>${icon("swap")}${last?"Babak terakhir":"Buat pairing babak "+(r+1)}</button></div>
+    </div>
+  </div>
+  ${wx?`<div class="ovl" data-act="wo-close"><div class="popc" data-act="wo-stay" role="dialog" aria-modal="true">
+    <div class="row nowrap" style="gap:8px">${icon("info","lg")}<b>Meja ${wo+1}: siapa yang tidak hadir?</b></div>
+    <p>WO (walkover) = menang tanpa bertanding. Ditulis <b>+/−</b>, bukan 1-0. Pemenang dapat 1 poin, tapi partai ini <b>tidak dihitung untuk rating</b>. Pilih hanya bila pemain benar-benar tidak hadir.</p>
+    <div class="grid" style="gap:6px">
+      <button class="opt ${wx.res==="-/+"?"on":""}" data-act="wo-set" data-v="-/+"><b>${c.players[wx.w].name} (putih) tidak hadir</b><span class="sm mute">${c.players[wx.b].name} menang WO · −/+</span></button>
+      <button class="opt ${wx.res==="+/-"?"on":""}" data-act="wo-set" data-v="+/-"><b>${c.players[wx.b].name} (hitam) tidak hadir</b><span class="sm mute">${c.players[wx.w].name} menang WO · +/−</span></button>
+      <button class="opt ${wx.res==="-/-"?"on":""}" data-act="wo-set" data-v="-/-"><b>Keduanya tidak hadir</b><span class="sm mute">Tidak ada yang dapat poin · −/−</span></button>
+    </div>
+    <div class="row nowrap"><button class="btn alt" style="flex:1" data-act="wo-close">Batal</button>${KSL.forfeit(wx.res)?`<button class="btn alt" style="flex:1" data-act="wo-set" data-v="">Hapus WO</button>`:""}</div>
+  </div></div>`:""}`},{
+  round:el=>r=+el.dataset.r,
+  res:el=>{const x=T.classes[kelas()].rounds[r-1][+el.dataset.b],v=el.dataset.v;x.res=x.res===v?null:v;KSL.save();KSL.toast(x.res?"Hasil meja "+(+el.dataset.b+1)+" disimpan":"Hasil meja "+(+el.dataset.b+1)+" dihapus","info")},
+  swap:()=>{swap=!swap;pick=null},
+  wo:el=>{wo=+el.dataset.b},
+  "wo-close":()=>{wo=null},
+  "wo-stay":()=>{},
+  "wo-set":el=>{const x=T.classes[kelas()].rounds[r-1][wo],v=el.dataset.v||null;x.res=v;KSL.save();KSL.toast(v?"WO dicatat di meja "+(wo+1)+" ("+KSL.resLabel(v)+")":"WO dihapus",v?"check":"info");wo=null},
+  color:el=>{const x=T.classes[kelas()].rounds[r-1][+el.dataset.b];[x.w,x.b]=[x.b,x.w];KSL.save();KSL.toast("Warna meja "+(+el.dataset.b+1)+" ditukar")},
+  pick:el=>{const g=T.classes[kelas()].rounds[r-1],b=+el.dataset.b,sd=el.dataset.s;
+    if(g[b].res){KSL.toast("Meja "+(b+1)+" sudah ada hasilnya, tidak bisa ditukar","x");return}
+    if(!pick){pick=[b,sd];return}
+    const[a,as]=pick;pick=null;if(a===b&&as===sd)return;
+    const t=g[a][as];g[a][as]=g[b][sd];g[b][sd]=t;KSL.save();KSL.toast("Posisi pemain ditukar")},
+  sim:()=>{const g=T.classes[kelas()].rounds[r-1];g.forEach(x=>{if(!x.res)x.res=["1-0","½-½","0-1"][Math.floor(Math.random()*3)]});KSL.save();KSL.toast("Hasil babak "+r+" diisi acak untuk simulasi")},
+  next:()=>{KSL.confirm("Terbitkan pairing babak "+(r+1)+"?","Pairing langsung tampil di halaman publik dan hasil babak "+r+" dikunci. Pastikan semua hasil sudah benar.","Terbitkan",false).then(ok=>{if(!ok)return;const c=T.classes[kelas()];c.pub=r+1;r++;KSL.save();KSL.render();KSL.toast("Pairing babak "+r+" diterbitkan")})}
+});
+</script>
+</body>
+</html>

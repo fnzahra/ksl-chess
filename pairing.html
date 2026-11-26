@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pairing · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="pairing" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {T,icon,standings,curRound,fmt,link,kelas,qp,hit,pLink}=KSL;
+KSL.page(()=>{
+  const c=T.classes[kelas()],cr=curRound(c),r=Math.min(+qp("babak",cr)||cr,c.pub),g=c.rounds[r-1];
+  // points before this round, like on a printed pairing sheet
+  const before=standings({players:c.players,rounds:c.rounds.slice(0,r-1)}),pt=id=>fmt(before.find(p=>p.id===id).pts);
+  const left=g.filter(x=>!x.res).length;
+  return KSL.tourHead("pairing")+`
+  <div class="card">
+    <div class="pad row between">
+      <div class="row"><span class="sm mute">Babak${KSL.tip("Angka kecil di samping nama = poin sebelum babak ini. Ketuk nama untuk melihat riwayat pemain.","Membaca pairing")}</span><div class="seg">${c.rounds.map((_,i)=>`<a class="${i+1===r?"on":""} ${i+1>c.pub?"off":""}" href="${link("pairing.html",{babak:i+1})}">${i+1}</a>`).join("")}</div></div>
+      <span class="sm">${r===cr?'<span class="pill live">Sedang dimainkan</span>':r<cr?'<span class="pill ok">Selesai</span>':""} <span class="mute">${left?left+" meja belum selesai":"Semua meja selesai"}</span></span>
+    </div>
+    <div class="board bt sm mute" style="padding-top:5px;padding-bottom:5px"><span class="no">Meja</span><span style="text-align:right">Putih</span><span style="text-align:center">Hasil</span><span>Hitam</span></div>
+    ${g.map((x,i)=>{const w=c.players[x.w],b=c.players[x.b];return `
+    <div class="board ${hit(w)||hit(b)?"hl":""}">
+      <span class="no">${i+1}</span>
+      <span class="side-w"><i class="sq w"></i><span class="pt">${pt(x.w)}</span>${pLink(w.id,w.name)}</span>
+      <span class="res ${x.res?"":"wait"}">${x.res?KSL.resLabel(x.res):"main"}</span>
+      <span class="side-k">${pLink(b.id,b.name)}<span class="pt">${pt(x.b)}</span><i class="sq k"></i></span>
+    </div>`}).join("")}
+  </div>`;
+});
+</script>
+</body>
+</html>

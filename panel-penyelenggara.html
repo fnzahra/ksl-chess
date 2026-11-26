@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penyelenggara · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="panel-penyelenggara" data-area="panel">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {icon}=KSL;
+const OKEY="ksl-orgs";
+const BASE=[
+ {name:"Klub Catur King Sang Long",city:"Pamekasan",pic:"Mukhlish",wa:"0877 5057 xxxx",n:3,p:144,st:"owner"},
+ {name:"Komunitas Catur Galis",city:"Galis",pic:"Hasbullah",wa:"0812 xxxx",n:1,p:32,st:"aktif"},
+ {name:"Ruang Catur",city:"Pamekasan",pic:"Fathullah",wa:"0813 xxxx",n:0,p:0,st:"tunggu"}
+];
+let orgs;try{orgs=JSON.parse(localStorage.getItem(OKEY))||BASE}catch(e){orgs=BASE}
+const keep=()=>{try{localStorage.setItem(OKEY,JSON.stringify(orgs))}catch(e){}};
+let ed=null;
+const pillOf=s=>s==="owner"?'<span class="pill acc">Pemilik</span>':s==="aktif"?'<span class="pill ok">Aktif</span>':s==="tunggu"?'<span class="pill live">Menunggu</span>':'<span class="pill">Nonaktif</span>';
+KSL.page(()=>{
+  const act=orgs.filter(o=>o.st==="owner"||o.st==="aktif");
+  return KSL.panelShell("panel-penyelenggara",`
+  <h1 class="mb">Penyelenggara${KSL.tip("Hanya admin aplikasi. Setiap penyelenggara hanya bisa mengubah turnamennya sendiri.","Penyelenggara")}</h1>
+  <div class="grid g4 mb">
+    <div class="card stat"><b>${act.length}</b><span>aktif</span></div>
+    <div class="card stat"><b>${orgs.filter(o=>o.st==="tunggu").length}</b><span>menunggu</span></div>
+    <div class="card stat"><b>${orgs.reduce((a,o)=>a+o.n,0)}</b><span>turnamen</span></div>
+    <div class="card stat"><b>${orgs.reduce((a,o)=>a+o.p,0)}</b><span>pemain</span></div>
+  </div>
+  ${ed!=null?`<form class="card pad mb" id="oe">
+    <div class="row between mb"><b>Ubah data klub</b><button type="button" class="btn alt sm" data-act="cancel">${icon("x")}</button></div>
+    <div class="grid g2e">
+      <div class="field"><label>Nama klub / komunitas</label><input name="name" required value="${orgs[ed].name}"></div>
+      <div class="field"><label>Kota</label><input name="city" required value="${orgs[ed].city}"></div>
+      <div class="field"><label>Penanggung jawab</label><input name="pic" required value="${orgs[ed].pic}"></div>
+      <div class="field"><label>WhatsApp${KSL.tip("Hanya terlihat oleh admin aplikasi.","WhatsApp")}</label><input name="wa" inputmode="tel" value="${orgs[ed].wa||""}"></div>
+    </div>
+    <button class="btn" type="submit">${icon("check")}Simpan</button>
+  </form>`:""}
+  <div class="card tscroll"><table>
+    <tr><th>Klub / komunitas</th><th class="dsk">Penanggung jawab</th><th class="n dsk">Turnamen</th><th class="n dsk">Pemain</th><th class="dsk">Status</th><th class="r">Aksi</th></tr>
+    ${orgs.map((o,i)=>`<tr><td><span class="who">${KSL.av(o.name)}<span><b>${o.name}</b><div class="sm mute">${o.city}</div><div class="mob mt2">${pillOf(o.st)}</div></span></span></td><td class="dsk">${o.pic}</td><td class="n dsk">${o.n}</td><td class="n dsk">${o.p}</td><td class="dsk">${pillOf(o.st)}</td><td class="r"><div class="row acts" style="justify-content:flex-end">${
+      o.st==="tunggu"?`<button class="btn sm" data-act="ok" data-i="${i}">${icon("check")}Setujui</button><button class="btn alt sm" data-act="no" data-i="${i}">Tolak</button>`
+      :o.st==="aktif"?`<button class="btn alt sm" data-act="off" data-i="${i}">Nonaktifkan</button>`:o.st==="off"?`<button class="btn alt sm" data-act="ok" data-i="${i}">Aktifkan</button>`:""}<button class="btn alt sm" data-act="edit" data-i="${i}" title="Ubah data ${o.name}">${icon("edit")}Ubah</button></div></td></tr>`).join("")}
+  </table></div>`)},{
+  ok:el=>{orgs[+el.dataset.i].st="aktif";keep();KSL.toast("Penyelenggara disetujui")},
+  no:el=>{const o=orgs[+el.dataset.i];KSL.confirm("Tolak "+o.name+"?","Pendaftaran klub ini dihapus. Mereka perlu mendaftar ulang.","Tolak").then(ok=>{if(!ok)return;orgs.splice(+el.dataset.i,1);ed=null;keep();KSL.render();KSL.toast("Pendaftaran "+o.name+" ditolak","info")})},
+  off:el=>{const o=orgs[+el.dataset.i];KSL.confirm("Nonaktifkan "+o.name+"?","Klub ini tidak bisa membuat atau mengubah turnamen sampai diaktifkan lagi. Turnamen yang sudah ada tetap tampil.","Nonaktifkan").then(ok=>{if(!ok)return;o.st="off";keep();KSL.render();KSL.toast(o.name+" dinonaktifkan","info")})},
+  edit:el=>{ed=+el.dataset.i;setTimeout(()=>document.getElementById("oe").scrollIntoView({block:"nearest"}))},
+  cancel:()=>{ed=null}
+});
+document.addEventListener("submit",e=>{if(e.target.id!=="oe")return;e.preventDefault();const f=new FormData(e.target);
+  Object.assign(orgs[ed],{name:f.get("name").trim(),city:f.get("city").trim(),pic:f.get("pic").trim(),wa:f.get("wa").trim()});ed=null;keep();KSL.render();KSL.toast("Data klub disimpan")});
+</script>
+</body>
+</html>

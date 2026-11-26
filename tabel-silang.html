@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabel silang · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="tabel-silang" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {T,standings,fmt,kelas,hit,pLink}=KSL;
+KSL.page(()=>{
+  const c=T.classes[kelas()],s=standings(c),ord=s.map(p=>p.id);
+  const res=(a,b)=>{for(const g of c.rounds)for(const x of g){
+    if(x.w===a&&x.b===b)return x.res?{"1-0":"1","0-1":"0","½-½":"½","+/-":"+","-/+":"−","-/-":"−"}[x.res]:"";
+    if(x.b===a&&x.w===b)return x.res?{"1-0":"0","0-1":"1","½-½":"½","+/-":"−","-/+":"+","-/-":"−"}[x.res]:""}return""};
+  const cls=v=>v==="1"||v==="+"?"res-w":v==="0"||v==="−"?"res-l":v==="½"?"res-d":"";
+  return KSL.tourHead("tabel-silang")+`
+  <div class="card tscroll xt-wrap"><table class="xt">
+    <tr><th class="n">#</th><th>Nama${KSL.tip("Baca per baris: 1 = menang, ½ = seri, 0 = kalah melawan pemain di kolom itu. Kosong = belum bertemu.","Membaca tabel silang")}</th>${ord.map((_,i)=>`<th class="n">${i+1}</th>`).join("")}<th class="n">Poin</th></tr>
+    ${s.map((p,i)=>`<tr class="${hit(p)?"hl":""}"><td class="n">${i+1}</td><td>${pLink(p.id,p.name)}</td>${ord.map(o=>{const v=o===p.id?"":res(p.id,o);return `<td class="n ${cls(v)}" style="${o===p.id?"background:var(--soft)":""}">${v}</td>`}).join("")}<td class="n b">${fmt(p.pts)}</td></tr>`).join("")}
+  </table></div>`;
+});
+</script>
+</body>
+</html>

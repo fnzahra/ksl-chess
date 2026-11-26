@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klub saya · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="panel-klub" data-area="panel">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {icon,av,CLUBS,PLAYERS,TOURS}=KSL;
+// my club profile, saved in this browser
+const KEY="ksl-myclub",base={...CLUBS.find(c=>c.id==="ksl"),contact:"0877 5057 xxxx",address:"Jl. Basar 99 Bugih, Pamekasan",about:"Selalu ada jalan"};
+let club;try{club={...base,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch(e){club=base}
+const esc=v=>String(v||"").replace(/"/g,"&quot;");
+KSL.page(()=>`
+  <h1 class="mb">Klub saya</h1>
+  <div class="grid g4 mb">
+    <div class="card stat"><b>${PLAYERS.filter(p=>p.club==="ksl").length}</b><span>anggota</span></div>
+    <div class="card stat"><b>${TOURS.filter(t=>t.org==="ksl").length}</b><span>turnamen</span></div>
+  </div>
+  <form class="card pad" id="f" style="max-width:560px">
+    <div class="row nowrap mb">${av(club.name,"lg")}<div><b>${club.name}</b><div class="sm mute">${club.city}</div></div></div>
+    <div class="field"><label>Nama klub / komunitas</label><input name="name" required value="${esc(club.name)}"></div>
+    <div class="grid g2e"><div class="field"><label>Kota</label><input name="city" required value="${esc(club.city)}"></div>
+      <div class="field"><label>Kontak (email / HP)${KSL.tip("Hanya untuk admin aplikasi dan peserta yang mendaftar ke turnamenmu.","Kontak")}</label><input name="contact" value="${esc(club.contact)}"></div></div>
+    <div class="field"><label>Alamat (opsional)</label><input name="address" value="${esc(club.address)}"></div>
+    <div class="field"><label>Deskripsi singkat (opsional)</label><input name="about" value="${esc(club.about)}"></div>
+    <button class="btn" type="submit">${icon("check")}Simpan</button>
+  </form>`);
+document.addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),name=f.get("name").trim(),city=f.get("city").trim();
+  if(!name||!city){KSL.toast("Nama dan kota wajib diisi","x");return}
+  club={...club,name,city,contact:f.get("contact"),address:f.get("address"),about:f.get("about")};
+  try{localStorage.setItem(KEY,JSON.stringify(club));KSL.render();KSL.toast("Data klub disimpan")}catch(_){KSL.toast("Gagal menyimpan, coba lagi","x")}});
+</script>
+</body>
+</html>

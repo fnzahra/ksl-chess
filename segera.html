@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turnamen akan datang · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="segera" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {TOURS,icon,pill,qp,av,byPid,clubName}=KSL;
+const T=TOURS.find(t=>t.id===qp("t","galis")&&t.status==="soon")||TOURS.find(t=>t.status==="soon");
+KSL.page(()=>{
+  // registered = sample list + sign-ups made in this browser
+  // registered = sample list + sign-ups made in this browser; one row per player ID
+  const mine=KSL.pending().filter(p=>p.t===T.id).map(p=>[p.name,p.club,1,p.pid]);
+  const reg=T.reg.map(r=>{const p=byPid(r.pid);return [p.name,clubName(p.club),0,p.pid]}).concat(mine),clubs=new Set(reg.map(r=>r[1])).size;
+  const cd=KSL.until(T.start),dl=KSL.until(T.deadline);
+  const unit=(v,l)=>`<div class="cdu"><b>${String(v).padStart(2,"0")}</b><span>${l}</span></div>`;
+  return `<a class="back" href="index.html">${icon("left")}Semua turnamen</a>
+  <div class="card feat mb">
+    <div class="row between nowrap"><span class="pill live">Segera</span><span class="sm mute">${icon("org")} ${KSL.orgName(T)}</span></div>
+    <h2 class="mt">${T.name}</h2>
+    <div class="grid g2e mt">
+      <div class="fc"><div class="sm mute">${icon("cal")} Kapan</div><b style="font-size:17px">${T.date}</b><div class="sm">${T.time} · ${T.sys}</div></div>
+      <a class="fc" href="https://maps.google.com/?q=${encodeURIComponent(T.place)}" target="_blank" rel="noopener"><div class="sm mute">${icon("pin")} Di mana</div><b style="font-size:17px">${T.place}</b><div class="sm">Buka peta ${icon("right")}</div></a>
+    </div>
+    <div class="mt"><div class="sm mute">Mulai dalam</div>
+      <div class="cd" id="cd">${cd?unit(cd.d,"hari")+unit(cd.h,"jam")+unit(cd.m,"menit")+unit(cd.s,"detik"):'<b>Sedang berlangsung</b>'}</div></div>
+    <div class="row mt"><a class="btn acc" href="daftar-peserta.html?t=${T.id}">${icon("user")}Daftar jadi peserta</a><span class="sm mute">${dl?`Pendaftaran tutup ${dl.d} hari ${dl.h} jam lagi`:"Pendaftaran ditutup"}</span></div>
+  </div>
+  <div class="grid g3 mb">
+    <div class="card stat"><b>${reg.length}<span class="sm mute"> / ${T.n}</span></b><span>pendaftar</span></div>
+    <div class="card stat"><b>${clubs}</b><span>klub</span></div>
+    <div class="card stat"><b><span class="pill acc">${T.open}</span></b><span>peserta${KSL.tip("Pemain dari klub mana pun bisa mendaftar. Penyelenggara menerima atau menolak, lalu peserta dikabari lewat WhatsApp.","Pendaftaran lintas klub")}</span></div>
+  </div>
+  <h3>Sudah mendaftar</h3>
+  <div class="card list">${reg.map(([n,c,me,pid])=>`<${pid?`a href="pemain.html?pid=${pid}"`:"div"}>${av(n)}<div class="grow"><b>${n}</b><div class="pid">${pid||"ID dibuat setelah diterima"} · ${c}</div></div>${me?'<span class="pill">Menunggu konfirmasi</span>':'<span class="pill ok">Terdaftar</span>'}</${pid?"a":"div"}>`).join("")}</div>`;
+});
+setInterval(()=>{const e=document.getElementById("cd"),c=KSL.until(T.start);if(!e||!c)return;e.querySelectorAll(".cdu b").forEach((b,i)=>b.textContent=String([c.d,c.h,c.m,c.s][i]).padStart(2,"0"))},1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="turnamen" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {T,icon,standings,curRound,doneRounds,fmt,link,pLink}=KSL;
+KSL.page(()=>{
+  const c0=T.classes[KSL.kelas()],st=KSL.stats(c0),pc=v=>st.games?Math.round(v/st.games*100):0;
+  const info=[["cal","Tanggal",T.date],["clock","Waktu",T.time],["pin","Tempat",T.place],["list","Sistem",T.sys],["trophy","Tie-break",T.tb],["user","Wasit",T.arb.join(", ")]];
+  return KSL.tourHead("turnamen")+`
+  <div class="grid g2">
+    <div>
+      <h3>Kelas</h3>
+      <div class="grid ${T.classes.length>1?"g2e":""} mb">${T.classes.map((c,i)=>{const s=standings(c),d=doneRounds(c),n=c.rounds.length;return `
+        <div class="card">
+          <div class="pad row between"><div><b>${c.name}</b><div class="sm mute">${c.players.length} pemain · ${n} babak</div></div><span class="pill live">Babak ${curRound(c)}</span></div>
+          <div class="pad bt"><div class="row between sm mute mb"><span>Babak selesai</span><span>${d} / ${n}</span></div><div class="bar"><i style="width:${d/n*100}%"></i></div></div>
+          <table class="bt">${s.slice(0,3).map((p,j)=>`<tr><td class="n"><span class="rank r${j+1}">${j+1}</span></td><td>${pLink(p.id,p.name)}</td><td class="r b">${fmt(p.pts)}</td></tr>`).join("")}</table>
+          <div class="pad bt row"><a class="btn sm" href="${link("pairing.html",{kelas:i})}">${icon("swap")}Pairing</a><a class="btn alt sm" href="${link("klasemen.html",{kelas:i})}">${icon("trophy")}Klasemen</a></div>
+        </div>`}).join("")}</div>
+      <h3>Statistik ${c0.name}${KSL.tip("Dihitung otomatis dari hasil yang sudah masuk. Kejutan = pemain dengan rating 100+ lebih rendah menang. WO tidak dihitung sebagai partai.","Statistik")}</h3>
+      <div class="card pad mb">
+        <div class="grid g4">
+          <div class="stat" style="padding:0"><b>${st.games}</b><span>partai</span></div>
+          <div class="stat" style="padding:0"><b>${pc(st.white)}%</b><span>putih menang</span></div>
+          <div class="stat" style="padding:0"><b>${pc(st.draw)}%</b><span>seri</span></div>
+          <div class="stat" style="padding:0"><b>${st.upsets}</b><span>kejutan</span></div>
+        </div>
+        <div class="split mt"><i style="width:${pc(st.white)}%;background:#d4d4d8"></i><i style="width:${pc(st.draw)}%;background:var(--accent)"></i><i style="width:${pc(st.black)}%;background:var(--ink)"></i></div>
+        <div class="legend"><span><i style="background:#d4d4d8"></i>Putih ${st.white}</span><span><i style="background:var(--accent)"></i>Seri ${st.draw}</span><span><i style="background:var(--ink)"></i>Hitam ${st.black}</span>${st.wo?`<span>WO ${st.wo}</span>`:""}<span>Rata-rata rating ${st.avg}</span></div>
+        <div class="grid mt" style="gap:6px">${Object.entries(st.clubs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="hb"><span class="nm" style="font-weight:500">${k}</span><span class="t"><i style="width:${v/c0.players.length*100}%"></i></span><b>${v}</b></div>`).join("")}</div>
+      </div>
+      <div class="sm mute mt">${T.status==="done"?"Turnamen selesai · hasil final":"Terakhir diperbarui 08.12 WIB oleh "+T.arb[0]}</div>
+    </div>
+    <div>
+      <h3>Informasi</h3>
+      <div class="card"><table>${info.map(([i,k,v])=>`<tr><td class="mute" style="width:1%">${icon(i)}</td><td class="mute">${k}</td><td><b>${v}</b></td></tr>`).join("")}</table></div>
+    </div>
+  </div>`;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klasemen · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="klasemen" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {T,icon,standings,doneRounds,fmt,link,kelas,qp,hit,pLink}=KSL;
+KSL.page(()=>{
+  const c=T.classes[kelas()],d=doneRounds(c),r=Math.min(+qp("setelah",d)||d,d);
+  const s=standings({players:c.players,rounds:c.rounds.slice(0,r)});
+  return KSL.tourHead("klasemen")+`
+  <div class="card">
+    <div class="pad row between">
+      <div class="row"><span class="sm mute">Setelah babak</span><div class="seg">${c.rounds.map((_,i)=>`<a class="${i+1===r?"on":""} ${i+1>d?"off":""}" href="${link("klasemen.html",{setelah:i+1})}">${i+1}</a>`).join("")}</div></div>
+      <span class="sm mute">${r===c.rounds.length?"Klasemen akhir":"Sementara"}</span>
+    </div>
+    <div class="tscroll bt"><table>
+      <tr><th class="n">#</th><th>Nama</th><th class="n" title="Poin">Poin</th><th class="n" title="Jumlah menang">M</th><th class="n" title="Sonneborn-Berger">SB</th><th class="n" title="Koya">Koya</th><th class="n dsk" title="Buchholz">BH</th><th class="dsk">Klub</th></tr>
+      ${s.map((p,i)=>`<tr class="${hit(p)?"hl":""}"><td class="n"><span class="rank ${i<3?"r"+(i+1):""}">${i+1}</span></td><td>${pLink(p.id,p.name,1)}</td><td class="n b">${fmt(p.pts)}</td><td class="n">${p.w}</td><td class="n">${KSL.num(p.sb)}</td><td class="n">${KSL.num(p.koya)}</td><td class="n dsk">${KSL.num(p.bh)}</td><td class="dsk mute">${p.club}</td></tr>`).join("")}
+    </table></div>
+  </div>
+  ${(()=>{const tn=KSL.tieNotes(s);return tn.length?`<h3 class="mt">Poin sama, ditentukan tie-break${KSL.tip("Bila poin sama, peringkat ditentukan tie-break berurutan: pertemuan langsung, jumlah menang, Sonneborn-Berger, Koya. Yang tertulis di sini adalah tie-break pertama yang membedakan keduanya.","Penentuan peringkat")}</h3>
+  <div class="card list">${tn.map(n=>`<div><span class="rank ${n.ra<4?"r"+n.ra:""}">${n.ra}</span><div class="grow"><b>${n.a.name}</b> <span class="mute">di atas</span> <b>${n.b.name}</b><div class="sm mute">${fmt(n.a.pts)} poin sama · ${n.why[0]}: ${n.why[1]}</div></div></div>`).join("")}</div>`:""})()}
+  <details class="more card pad mt"><summary>Arti istilah di tabel</summary>
+    <div class="gl mt">${[["Poin","Menang 1, seri ½, kalah 0."],["M","Jumlah menang."],["SB","Sonneborn-Berger. "+KSL.TERMS["Sonneborn-Berger"]],["Koya",KSL.TERMS["Koya"]],["BH","Buchholz. "+KSL.TERMS["Buchholz"]+" (hanya di laptop)"],["Urutan","Bila poin sama: 1. Pertemuan langsung, 2. Jumlah menang, 3. SB, 4. Koya. Dihitung otomatis."]].map(([k,v])=>`<div><b>${k}</b><span>${v}</span></div>`).join("")}</div>
+  </details>`;
+});
+</script>
+</body>
+</html>

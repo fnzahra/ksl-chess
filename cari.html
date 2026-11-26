@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klub & Pemain · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="cari" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {icon,av,qp,CLUBS,PLAYERS,TOURS,clubName}=KSL;
+let tab=qp("klub")?"klub":qp("tab","pemain"),q="",klub=qp("klub",null);
+KSL.page(()=>{
+  const ql=q.toLowerCase();
+  const players=PLAYERS.filter(p=>(!klub||p.club===klub)&&(!ql||(p.name+" "+p.pid+" "+clubName(p.club)).toLowerCase().includes(ql)));
+  const clubs=CLUBS.filter(c=>!ql||(c.name+" "+c.city).toLowerCase().includes(ql));
+  const members=id=>PLAYERS.filter(p=>p.club===id).length,events=id=>TOURS.filter(t=>t.org===id).length;
+  return `<h1 class="mb">Klub & Pemain</h1>
+  <div class="card pad mb">
+    <div class="row between" style="gap:10px">
+      <div class="seg">${[["pemain","users","Pemain"],["klub","org","Klub & Komunitas"]].map(([k,i,l])=>`<a href="#" class="${tab===k?"on":""}" data-act="tab" data-k="${k}">${icon(i)}<span style="margin-left:5px">${l}</span></a>`).join("")}</div>
+      <div class="input-ic" style="flex:1;min-width:200px">${icon("search")}<input id="q" placeholder="${tab==="klub"?"Cari nama klub atau kota":"Cari nama, ID pemain (TC-…), atau klub"}" value="${q}"></div>
+    </div>
+  </div>
+  ${tab==="pemain"?`
+    ${klub?`<div class="row mb"><span class="pill acc">${clubName(klub)}</span><a href="#" class="lnk sm" data-act="all">Semua klub</a></div>`:""}
+    <div class="card list">${players.map(p=>`<a href="pemain.html?pid=${p.pid}">${av(p.name)}<div class="grow"><b>${p.name}</b><div class="pid">${p.pid} · ${clubName(p.club)}</div></div><span class="sm"><b>${KSL.ratingNow(p.pid)}</b></span>${icon("right")}</a>`).join("")||'<div class="pad sm mute">Tidak ada pemain yang cocok.</div>'}</div>
+    <div class="sm mute mt">Nama bisa sama, jadi tiap pemain punya ID unik (TC-…).</div>`:`
+    <div class="card list">${clubs.map(c=>`<a href="#" data-act="club" data-k="${c.id}">${av(c.name)}<div class="grow"><b>${c.name}</b><div class="sm mute">${c.city} · ${members(c.id)} pemain · ${events(c.id)} turnamen</div></div>${icon("right")}</a>`).join("")||'<div class="pad sm mute">Tidak ada klub yang cocok.</div>'}</div>`}`;
+},{
+  tab:el=>{tab=el.dataset.k;q=""},
+  club:el=>{klub=el.dataset.k;tab="pemain";q=""},
+  all:()=>{klub=null}
+});
+document.addEventListener("input",e=>{if(e.target.id!=="q")return;q=e.target.value;const pos=e.target.selectionStart;KSL.render();const f=document.getElementById("q");f.focus();f.setSelectionRange(pos,pos)});
+</script>
+</body>
+</html>

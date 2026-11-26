@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peserta · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="peserta" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {T,kelas,hit,pLink}=KSL;
+KSL.page(()=>{
+  const c=T.classes[kelas()],tr=KSL.ratingTrack(c),ps=c.players.slice().sort((a,b)=>tr.cur[b.id]-tr.cur[a.id]);
+  const clubs=[...new Set(c.players.map(p=>p.club))].length;
+  return KSL.tourHead("peserta")+`
+  <div class="grid g3 keep3 mb">
+    <div class="card stat"><b>${c.players.length}</b><span>pemain</span></div>
+    <div class="card stat"><b>${Math.round(c.players.reduce((a,p)=>a+p.rtg,0)/c.players.length)}</b><span>rata-rata rating</span></div>
+    <div class="card stat"><b>${clubs}</b><span>asal kota / klub</span></div>
+  </div>
+  <div class="card tscroll"><table>
+    <tr><th class="n">No</th><th class="n">Kode</th><th>Nama</th><th class="n">Rating${KSL.tip("Rating klub (Elo) aplikasi ini, diperbarui otomatis setiap babak. Angka kecil = perubahan sejak awal turnamen. Bukan rating resmi FIDE atau PERCASI.","Rating klub")}</th><th>Klub / Kota</th></tr>
+    ${ps.map((p,i)=>`<tr class="${hit(p)?"hl":""}"><td class="n">${i+1}</td><td class="n pid">${p.pid}</td><td><span class="who">${KSL.av(p.name)}<span>${KSL.titleBadge(p.title)}${pLink(p.id,p.name)}</span></span></td><td class="n"><b>${tr.cur[p.id]}</b> <span class="sm ${tr.cur[p.id]>=p.rtg?"res-w":"res-l"}">${tr.cur[p.id]>=p.rtg?"+":"−"}${Math.abs(tr.cur[p.id]-p.rtg)}</span></td><td class="mute">${p.club}</td></tr>`).join("")}
+  </table></div>
+  <div class="sm mute mt">Ada kesalahan nama, gelar, atau klub? <a href="#" class="lnk" data-act="fb">Ajukan koreksi ke panitia</a></div>`;
+},{fb:()=>KSL.openFeedback(T.name)});
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profil pemain · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="pemain" data-area="publik">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {icon,fmt,qp,score,byPid,clubName,TOURS,av}=KSL;
+// player is identified by unique ID (?pid=TC-…); names can repeat
+const pid=qp("pid",KSL.PLAYERS[0].pid),P=byPid(pid)||KSL.PLAYERS[0];
+KSL.page(()=>{
+  const log=KSL.ratingLog(P.pid),now=log.length?log[log.length-1].after:P.rtg,first=log.length?log[0].before:P.rtg;
+  // every tournament (with results) the player is in, newest first
+  const tours=TOURS.filter(t=>t.classes).map(t=>{for(const c of t.classes){const p=c.players.find(x=>x.pid===P.pid);if(p){const s=KSL.standings(c);return {t,c,p,rank:s.findIndex(x=>x.id===p.id)+1,me:s.find(x=>x.id===p.id)}}}}).filter(Boolean).sort((a,b)=>a.t.iso<b.t.iso?1:-1);
+  const pts=log.length?[log[0].before,...log.map(x=>x.after)]:[P.rtg,P.rtg],mx=Math.max(...pts),mn=Math.min(...pts),w=Math.max(40,(pts.length-1)*24);
+  const y=v=>36-((v-mn)/(mx-mn||1))*32;
+  return `<a class="back" href="cari.html">${icon("left")}Klub & pemain</a>
+  <div class="card pad mb">
+    <div class="row nowrap">${av(P.name,"lg")}<div class="grow"><h1>${KSL.titleBadge(P.title)}${P.name}</h1><div class="meta"><span><b>${P.pid}</b>${KSL.tip("ID pemain unik. Dipakai di semua turnamen dan klub, jadi pemain dengan nama sama tidak tertukar.","ID pemain")}</span><span>${icon("org")}${clubName(P.club)}</span></div></div></div>
+    <div class="grid g4 mt">
+      <div class="card stat"><b>${now}</b><span>rating klub${KSL.tip("Rating klub (Elo) di aplikasi ini: dihitung dari hasil partai, berubah setiap babak. Menang dari lawan yang lebih kuat menambah lebih banyak. WO dan bye tidak dihitung. Bukan rating resmi FIDE/PERCASI.","Rating klub")}</span></div>
+      <div class="card stat"><b class="${now>=first?"res-w":"res-l"}">${now>=first?"+":"−"}${Math.abs(now-first)}</b><span>sejak ${log[0]?log[0].date:"-"}</span></div>
+      <div class="card stat"><b>${tours.length}</b><span>turnamen</span></div>
+      <div class="card stat"><b>${log.length}</b><span>babak dinilai</span></div>
+    </div>
+  </div>
+  <div class="grid g2 mb">
+    <div><h3>Turnamen</h3>
+      <div class="card list">${tours.map(x=>`<a href="klasemen.html?t=${x.t.id}&kelas=${x.t.classes.indexOf(x.c)}"><div class="grow"><b class="sm">${x.t.name}</b><div class="sm mute">${x.t.date} · ${x.c.name} · ${fmt(x.me.pts)} poin</div></div><span class="rank ${x.rank<4?"r"+x.rank:""}">${x.rank}</span></a>`).join("")||'<div class="pad sm mute">Belum ada turnamen.</div>'}</div></div>
+    <div><h3>Grafik rating</h3>
+      <div class="card pad"><svg viewBox="-4 0 ${w+8} 40" width="100%" height="64" aria-label="Grafik rating"><polyline points="${pts.map((v,i)=>`${i*24},${y(v)}`).join(" ")}" fill="none" stroke="var(--brand)" stroke-width="2"/></svg>
+      <div class="row between sm mute"><span>${first}</span><span>${now}</span></div></div></div>
+  </div>
+  <h3>Riwayat perubahan rating</h3>
+  <div class="card tscroll"><table>
+    <tr><th>Tanggal</th><th>Turnamen</th><th class="n">Rating</th><th class="n">±</th></tr>
+    ${log.slice().reverse().map(x=>`<tr><td class="sm">${x.date}</td><td class="sm">${x.t.name}<div class="mute">${x.cls} · babak ${x.round}</div></td><td class="n">${x.before} → <b>${x.after}</b></td><td class="n ${x.after>=x.before?"res-w":"res-l"}">${x.after>=x.before?"+":"−"}${Math.abs(x.after-x.before)}</td></tr>`).join("")||'<tr><td colspan="4" class="mute">Belum ada partai yang dinilai.</td></tr>'}
+  </table></div>
+  <div class="sm mute mt">Data pribadi (HP, tanggal lahir) tidak ditampilkan di halaman publik. · <a href="#" class="lnk" data-act="fb">Ajukan koreksi data</a></div>`;
+},{fb:()=>KSL.openFeedback(P.name+" ("+P.pid+")")});
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paket · King Sang Long</title>
+<link rel="stylesheet" href="assets/style.css?v=1794710626">
+</head>
+<body data-page="paket" data-area="panel">
+<div id="stage"><div id="app"><main id="view"></main></div></div>
+<script src="assets/app.js?v=1794710626"></script>
+<script>
+const {icon,qp}=KSL;
+const FREE=["Turnamen & peserta tanpa batas","Liga, Swiss, gugur","Pairing, klasemen, tie-break otomatis","Halaman publik + QR","Rating Elo klub","Pendaftaran peserta + impor CSV","Ekspor Excel & salin link hasil"];
+const PRO=["Kategori juara (U-12, putri, senior)","Notifikasi pairing otomatis ke WA peserta","Sertifikat juara otomatis (PDF)","PDF klasemen bermerek klub + ekspor TRF","Logo & warna klub sendiri","Multi-admin & wasit paralel"];
+let pay=null;
+KSL.page(()=>{
+  const f=qp("f"),cur=KSL.plan(),li=(x,ok=1)=>`<li>${icon(ok?"check":"x")}${x}</li>`;
+  const card=(id,name,sub,price,per,items,cta,hl,badge="")=>`<div class="card pad plan ${hl?"hl":""}">
+    <div class="row between"><b>${name}</b>${cur===id?'<span class="pill ok">Aktif</span>':(badge?`<span class="pill ok">${badge}</span>`:"")}</div>
+    <div class="sm mute mt2">${sub}</div>
+    <div class="price">${price}<span> ${per}</span></div>
+    <ul>${items}</ul>${cta}</div>`;
+  return KSL.panelShell("paket",`
+  <h1 class="mb">Paket${KSL.tip("Fitur inti turnamen gratis selamanya. Upgrade ke Premium kapan saja saat butuh sertifikat instan, kategori juara, atau multi-wasit.","Paket")}</h1>
+  ${cur==="free"&&KSL.trialLeft()===null?`<div class="card pad mb row between" style="background:var(--brand-soft)"><span class="sm"><b>Coba Premium gratis 14 hari.</b> Tanpa kartu, otomatis kembali ke Gratis.</span><button class="btn acc sm" data-act="trial">${icon("star")}Mulai trial</button></div>`:""}
+  ${cur==="free"&&KSL.trialLeft()>0?`<div class="card pad mb row nowrap" style="background:var(--brand-soft)">${icon("clock")}<span class="sm">Trial Premium aktif · <b>${KSL.trialLeft()} hari lagi</b></span></div>`:""}
+  ${f?`<div class="card pad mb row nowrap" style="background:var(--accent-soft)">${icon("lock")}<span class="sm"><b>${f}</b> termasuk dalam paket Premium. Aktifkan untuk 1 turnamen (Rp 49rb) atau hemat setahun penuh.</span></div>`:""}
+  ${pay?`<div class="card pad mb" style="max-width:420px">
+      <b>Aktifkan ${pay==="event"?"Premium Turnamen · Rp 49.000":"Premium Klub · Rp 299.000/tahun"}</b>
+      <div class="sm mute mt2">Simulasi aktivasi paket Premium di prototype.</div>
+      <div class="row mt"><button class="btn acc" data-act="paid">${icon("check")}Aktifkan (simulasi)</button><button class="btn alt" data-act="cancel">Batal</button></div>
+    </div>`:""}
+  <div class="plans">
+    ${card("free","Gratis","Untuk latih tanding & turnamen internal","Rp 0","selamanya",FREE.map(x=>li(x)).join("")+PRO.slice(0,2).map(x=>li(x,0)).join(""),cur==="free"?'<span class="btn alt" style="opacity:.6">Paket saat ini</span>':'<button class="btn alt" data-act="down">Kembali ke Gratis</button>')}
+    ${card("event","Premium Turnamen","Hemat jam kerja panitia di hari-H","Rp 49rb","/ turnamen",li("Semua fitur Gratis")+PRO.map(x=>li(x)).join(""),cur==="event"?'<span class="btn alt" style="opacity:.6">Aktif</span>':'<button class="btn" data-act="buy" data-p="event">Pilih untuk 1 turnamen</button>')}
+    ${card("club","Premium Klub","Setara Rp 25rb/bln · hemat 50% vs eceran","Rp 299rb","/ tahun",li("Semua fitur Premium Turnamen")+li("Turnamen Premium tanpa batas setahun")+li("Template sertifikat & branding klub tersimpan")+li("Prioritas dukungan teknis hari-H"),cur==="club"?'<span class="btn alt" style="opacity:.6">Aktif</span>':'<button class="btn acc" data-act="buy" data-p="club">Pilih Paket Hemat</button>',1,"Paling Hemat")}
+  </div>
+  <div class="card pad mt row nowrap">${icon("info")}<span class="sm">Semua fitur inti turnamen gratis selamanya tanpa batasan peserta. Upgrade ke Premium hanya saat acara butuh kategori juara, sertifikat PDF instan, branding klub, atau banyak wasit.</span></div>`)
+},{
+  trial:()=>{KSL.startTrial();KSL.toast("Trial Premium 14 hari dimulai");setTimeout(()=>location.reload(),900)},
+  buy:el=>{pay=el.dataset.p},
+  cancel:()=>{pay=null},
+  paid:()=>{KSL.setPlan(pay);pay=null;KSL.toast("Premium aktif (simulasi)");setTimeout(()=>location.reload(),900)},
+  down:()=>{KSL.setPlan("free");KSL.toast("Kembali ke paket Gratis");setTimeout(()=>location.reload(),900)}
+});
+</script>
+</body>
+</html>
